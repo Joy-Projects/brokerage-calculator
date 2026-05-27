@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#001f9f" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+  <title>Brokerage Calculator</title>
+  <style>
+    :root {
+      --blue: #001f9f;
+      --green: #00b33c;
+      --gray: #666;
+      --border: #d9d9d9;
+      --shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: #fff;
+      color: #111;
+    }
+    .app {
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 28px 18px 60px;
+    }
+    .top-tabs {
+      display: flex;
+      justify-content: center;
+      gap: 44px;
+      border-bottom: 1px solid #aaa;
+      margin-bottom: 36px;
+      overflow-x: auto;
+      color: #999;
+      font-weight: 700;
+    }
+    .top-tabs button {
+      background: transparent;
+      border: 0;
+      padding: 0 16px 16px;
+      font-size: 15px;
+      color: #999;
+      cursor: pointer;
+      border-bottom: 3px solid transparent;
+      white-space: nowrap;
+    }
+    .top-tabs button.active {
+      color: var(--blue);
+      border-color: var(--blue);
+    }
+    .search-box {
+      width: 100%;
+      max-width: 560px;
+      height: 48px;
+      border: 1px solid #aaa;
+      border-radius: 10px;
+      padding: 0 16px;
+      margin-bottom: 28px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: #777;
+    }
+    .search-box input {
+      border: 0;
+      outline: 0;
+      width: 100%;
+      font-size: 16px;
+    }
+    .segment {
+      display: flex;
+      gap: 24px;
+      margin-bottom: 36px;
+    }
+    .segment button {
+      min-width: 145px;
+      border-radius: 28px;
+      padding: 14px 28px;
+      border: 1px solid #bbb;
+      background: white;
+      color: var(--blue);
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .segment button.active {
+      background: var(--blue);
+      color: white;
+      border-color: var(--blue);
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 26px;
+    }
+    label {
+      display: block;
+      font-size: 13px;
+      margin-bottom: 6px;
+    }
+    .field {
+      border: 1px solid #aaa;
+      border-radius: 10px;
+      height: 52px;
+      box-shadow: 0 3px 8px rgba(0,0,0,.14);
+      display: flex;
+      align-items: center;
+      overflow: hidden;
+      background: white;
+    }
+    .field span {
+      padding-left: 16px;
+      color: #666;
+    }
+    .field input {
+      width: 100%;
+      height: 100%;
+      border: 0;
+      outline: 0;
+      padding: 0 16px;
+      font-size: 18px;
+    }
+    .amount-box {
+      margin: 0 0 32px;
+      padding: 18px 20px;
+      border-radius: 14px;
+      background: #f4f7ff;
+      border: 1px solid #d9e1ff;
+      display: flex;
+      justify-content: space-between;
+      gap: 20px;
+      align-items: center;
+    }
+    .amount-box strong {
+      color: var(--blue);
+      font-size: 18px;
+    }
+    .amount-box span {
+      font-size: 22px;
+      font-weight: 800;
+    }
+    h2 {
+      color: var(--blue);
+      font-size: 18px;
+      margin: 0 0 14px;
+    }
+    .plans {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      margin-bottom: 34px;
+    }
+    .plan-card {
+      border: 1px solid #eee;
+      border-radius: 10px;
+      padding: 20px;
+      min-height: 92px;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      box-shadow: var(--shadow);
+      background: white;
+    }
+    .plan-card.active { border-color: var(--blue); }
+    .plan-card h3 { margin: 0 0 8px; font-size: 18px; }
+    .plan-card p { margin: 0; color: #666; font-size: 14px; }
+    .plan-badge {
+      position: absolute;
+      right: 16px;
+      top: 18px;
+      font-weight: 700;
+      font-size: 18px;
+      z-index: 2;
+    }
+    .bubble {
+      position: absolute;
+      right: -8px;
+      top: 8px;
+      width: 74px;
+      height: 74px;
+      border-radius: 50%;
+      opacity: .55;
+    }
+    .bubble.blue { background: radial-gradient(circle, #8bd2ff 20%, #cceeff 58%, transparent 60%); }
+    .bubble.green { background: radial-gradient(circle, #d9f6dd 20%, #e8faed 58%, transparent 60%); }
+    .bubble.red { border-radius: 0; transform: rotate(8deg); background: #ffd7dc; }
+    .summary {
+      border-bottom: 1px solid #bbb;
+      padding-bottom: 28px;
+    }
+    .row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 0;
+      font-size: 18px;
+      font-weight: 700;
+      color: #666;
+      gap: 20px;
+    }
+    .row.blue { color: var(--blue); }
+    .row.green { color: var(--green); }
+    .breakup-toggle {
+      background: transparent;
+      border: 0;
+      color: var(--blue);
+      font-weight: 700;
+      cursor: pointer;
+      font-size: 15px;
+      margin: 2px 0 14px auto;
+      display: block;
+    }
+    .breakup {
+      padding: 0 0 6px 24px;
+      color: #9aa0a6;
+      font-size: 16px;
+    }
+    .breakup .tax-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 7px 0;
+      gap: 20px;
+    }
+    .note {
+      margin-top: 28px;
+      font-size: 14px;
+      line-height: 1.6;
+      color: #555;
+    }
+    @media (max-width: 800px) {
+      .app { padding: 22px 14px 48px; }
+      .top-tabs { justify-content: flex-start; gap: 18px; margin-bottom: 28px; }
+      .grid, .plans { grid-template-columns: 1fr; }
+      .segment { gap: 12px; }
+      .segment button { min-width: auto; flex: 1; }
+      .row, .amount-box { align-items: flex-start; }
+      .amount-box { flex-direction: column; }
+      .breakup { padding-left: 8px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <nav class="top-tabs" aria-label="Market segment tabs">
+      <button class="active" data-market="equity">Equity</button>
+      <button data-market="options">Options</button>
+      <button data-market="futures">Futures</button>
+      <button data-market="currency">Currency</button>
+      <button data-market="commodity">Commodity</button>
+    </nav>
+
+    <div class="search-box">
+      <span>⌕</span>
+      <input id="stockSearch" type="text" placeholder="Search Stocks..." />
+    </div>
+
+    <div class="segment">
+      <button id="intradayBtn" class="active">Intraday</button>
+      <button id="deliveryBtn">Delivery</button>
+    </div>
+
+    <section class="grid">
+      <div>
+        <label for="quantity">Quantity</label>
+        <div class="field"><input id="quantity" type="number" min="0" value="0" /></div>
+      </div>
+      <div>
+        <label for="buyPrice">Buy Price</label>
+        <div class="field"><span>₹</span><input id="buyPrice" type="number" min="0" step="0.01" value="0" /></div>
+      </div>
+      <div>
+        <label for="sellPrice">Sell Price</label>
+        <div class="field"><span>₹</span><input id="sellPrice" type="number" min="0" step="0.01" value="0" /></div>
+      </div>
+    </section>
+
+    <section class="amount-box">
+      <strong>Amount required to buy this quantity</strong>
+      <span id="amountRequired">₹0.00</span>
+    </section>
+
+    <h2>Brokerage across our plans</h2>
+    <section class="plans">
+      <article class="plan-card active" data-plan="youth">
+        <h3>Trade Free Youth</h3>
+        <p>For below 30 years of age</p>
+        <div class="plan-badge" id="youthBadge">₹10.00</div>
+        <div class="bubble blue"></div>
+      </article>
+      <article class="plan-card" data-plan="pro">
+        <h3>Trade Free Pro</h3>
+        <p>Get pay later (MTF) at special rates</p>
+        <div class="plan-badge" id="proBadge">₹10.00</div>
+        <div class="bubble green"></div>
+      </article>
+      <article class="plan-card" data-plan="free">
+        <h3>Trade Free Plan</h3>
+        <p>For above 30 years of age</p>
+        <div class="plan-badge" id="freeBadge">₹10.00</div>
+        <div class="bubble red"></div>
+      </article>
+    </section>
+
+    <section class="summary">
+      <div class="row"><span>Gross Profit</span><span id="grossProfit">₹0.00</span></div>
+      <div class="row blue"><span>BROKERAGE*</span><span id="brokerage">- ₹0.00</span></div>
+      <div class="row"><span>Other charges/taxes</span><span id="otherCharges">- ₹0.00</span></div>
+
+      <div id="breakup" class="breakup" hidden>
+        <div class="tax-row"><span id="sttLabel">STT</span><span id="sttValue">₹0.00</span></div>
+        <div class="tax-row"><span>SEBI Turnover charges (0.0001%)</span><span id="sebiValue">₹0.00</span></div>
+        <div class="tax-row"><span>Transaction charges (0.00297%)</span><span id="transactionValue">₹0.00</span></div>
+        <div class="tax-row"><span>GST (18%)</span><span id="gstValue">₹0.00</span></div>
+        <div class="tax-row"><span id="stampLabel">Stamp Duty</span><span id="stampValue">₹0.00</span></div>
+      </div>
+
+      <button id="toggleBreakup" class="breakup-toggle">View breakup⌄</button>
+      <div class="row green"><span>NET P&L</span><span id="netPL">₹0.00</span></div>
+    </section>
+
+    <p class="note">
+      This app works in browser and can be installed on mobile. It is a calculator, so all calculations happen inside your device. Please verify the latest official brokerage, exchange, tax, STT, SEBI, GST, and stamp-duty rates before using it for real trading decisions.
+    </p>
+  </main>
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js'));
+    }
+
+    const state = { market: 'equity', tradeType: 'intraday', plan: 'youth', showBreakup: false };
+
+    const planRules = {
+      intraday: {
+        youth: { label: '₹10.00', type: 'flat', value: 10 },
+        pro: { label: '₹10.00', type: 'flat', value: 10 },
+        free: { label: '₹10.00', type: 'flat', value: 10 }
+      },
+      delivery: {
+        youth: { label: '0', type: 'flat', value: 0 },
+        pro: { label: '0.1 %', type: 'percent', value: 0.001 },
+        free: { label: '0.20 %', type: 'percent', value: 0.002 }
+      }
+    };
+
+    const rates = {
+      intraday: {
+        stt: 0.00025,
+        stamp: 0.00003,
+        sttLabel: 'STT (Securities Transaction Tax) (0.025%)',
+        stampLabel: 'Stamp Duty (0.003%)'
+      },
+      delivery: {
+        stt: 0.001,
+        stamp: 0.00015,
+        sttLabel: 'STT (Securities Transaction Tax) (0.1%)',
+        stampLabel: 'Stamp Duty (0.015%)'
+      },
+      sebi: 0.000001,
+      transaction: 0.0000297,
+      gst: 0.18
+    };
+
+    const els = {
+      quantity: document.getElementById('quantity'),
+      buyPrice: document.getElementById('buyPrice'),
+      sellPrice: document.getElementById('sellPrice'),
+      amountRequired: document.getElementById('amountRequired'),
+      grossProfit: document.getElementById('grossProfit'),
+      brokerage: document.getElementById('brokerage'),
+      otherCharges: document.getElementById('otherCharges'),
+      netPL: document.getElementById('netPL'),
+      sttValue: document.getElementById('sttValue'),
+      sebiValue: document.getElementById('sebiValue'),
+      transactionValue: document.getElementById('transactionValue'),
+      gstValue: document.getElementById('gstValue'),
+      stampValue: document.getElementById('stampValue'),
+      sttLabel: document.getElementById('sttLabel'),
+      stampLabel: document.getElementById('stampLabel'),
+      breakup: document.getElementById('breakup'),
+      toggleBreakup: document.getElementById('toggleBreakup'),
+      intradayBtn: document.getElementById('intradayBtn'),
+      deliveryBtn: document.getElementById('deliveryBtn'),
+      youthBadge: document.getElementById('youthBadge'),
+      proBadge: document.getElementById('proBadge'),
+      freeBadge: document.getElementById('freeBadge')
+    };
+
+    function money(value) {
+      const safeValue = Number.isFinite(value) ? value : 0;
+      return '₹' + safeValue.toFixed(2);
+    }
+
+    function getInputValue(input) {
+      return Math.max(0, Number(input.value) || 0);
+    }
+
+    function calculateBrokerage(turnover) {
+      const rule = planRules[state.tradeType][state.plan];
+      if (rule.type === 'flat') return rule.value;
+      return turnover * rule.value;
+    }
+
+    function calculate() {
+      const qty = getInputValue(els.quantity);
+      const buy = getInputValue(els.buyPrice);
+      const sell = getInputValue(els.sellPrice);
+
+      const buyValue = qty * buy;
+      const sellValue = qty * sell;
+      const turnover = buyValue + sellValue;
+      const grossProfit = sellValue - buyValue;
+      const brokerage = calculateBrokerage(turnover);
+
+      const tradeRates = rates[state.tradeType];
+      const stt = sellValue * tradeRates.stt;
+      const sebi = turnover * rates.sebi;
+      const transaction = turnover * rates.transaction;
+      const stamp = buyValue * tradeRates.stamp;
+      const gst = (brokerage + transaction) * rates.gst;
+      const otherCharges = stt + sebi + transaction + gst + stamp;
+      const netPL = grossProfit - brokerage - otherCharges;
+
+      els.amountRequired.textContent = money(buyValue);
+      els.grossProfit.textContent = money(grossProfit);
+      els.brokerage.textContent = '- ' + money(brokerage);
+      els.otherCharges.textContent = '- ' + money(otherCharges);
+      els.netPL.textContent = money(netPL);
+
+      els.sttValue.textContent = money(stt);
+      els.sebiValue.textContent = money(sebi);
+      els.transactionValue.textContent = money(transaction);
+      els.gstValue.textContent = money(gst);
+      els.stampValue.textContent = money(stamp);
+      els.sttLabel.textContent = tradeRates.sttLabel;
+      els.stampLabel.textContent = tradeRates.stampLabel;
+
+      els.youthBadge.textContent = planRules[state.tradeType].youth.label;
+      els.proBadge.textContent = planRules[state.tradeType].pro.label;
+      els.freeBadge.textContent = planRules[state.tradeType].free.label;
+    }
+
+    function setTradeType(type) {
+      state.tradeType = type;
+      els.intradayBtn.classList.toggle('active', type === 'intraday');
+      els.deliveryBtn.classList.toggle('active', type === 'delivery');
+      calculate();
+    }
+
+    function setPlan(plan) {
+      state.plan = plan;
+      document.querySelectorAll('.plan-card').forEach(card => {
+        card.classList.toggle('active', card.dataset.plan === plan);
+      });
+      calculate();
+    }
+
+    document.querySelectorAll('.top-tabs button').forEach(button => {
+      button.addEventListener('click', () => {
+        document.querySelectorAll('.top-tabs button').forEach(btn => btn.classList.remove('active'));
+        button.classList.add('active');
+        state.market = button.dataset.market;
+      });
+    });
+
+    els.intradayBtn.addEventListener('click', () => setTradeType('intraday'));
+    els.deliveryBtn.addEventListener('click', () => setTradeType('delivery'));
+    document.querySelectorAll('.plan-card').forEach(card => card.addEventListener('click', () => setPlan(card.dataset.plan)));
+    [els.quantity, els.buyPrice, els.sellPrice].forEach(input => input.addEventListener('input', calculate));
+
+    els.toggleBreakup.addEventListener('click', () => {
+      state.showBreakup = !state.showBreakup;
+      els.breakup.hidden = !state.showBreakup;
+      els.toggleBreakup.textContent = state.showBreakup ? 'Hide breakup⌃' : 'View breakup⌄';
+    });
+
+    calculate();
+  </script>
+</body>
+</html>
